@@ -1,14 +1,14 @@
+
 import PDFDocument from "pdfkit";
 import { Buffer } from "buffer";
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") return res.status(405).end();
+  if (req.method !== "POST") return res.status(405).end("Método não permitido");
 
   const { imovel, vendedor, comprador, valor, formaPagamento, observacoes } = req.body;
 
   const doc = new PDFDocument({ size: "A4", margin: 50 });
   const buffers = [];
-
   doc.on("data", buffers.push.bind(buffers));
   doc.on("end", () => {
     const pdfData = Buffer.concat(buffers);
@@ -17,22 +17,33 @@ export default async function handler(req, res) {
     res.send(pdfData);
   });
 
-  doc.fontSize(20).fillColor("#a97d36").text("Proposta de Compra - House55", { align: "center" });
+  // Cabeçalho
+  doc.fontSize(18).fillColor("#a97d36").text("HOUSE55 IMOBILIÁRIA", { align: "center" });
+  doc.moveDown(1);
+  doc.fontSize(14).fillColor("#000").text("Proposta de Compra de Imóvel", { align: "center", underline: true });
   doc.moveDown(2);
 
-  doc.fontSize(12).fillColor("#000000");
-  doc.text(`📍 Imóvel: ${imovel}`);
-  doc.text(`🤝 Vendedor: ${vendedor}`);
-  doc.text(`🧑‍💼 Comprador: ${comprador}`);
-  doc.text(`💰 Valor da Proposta: R$ ${valor}`);
-  doc.text(`💳 Forma de Pagamento: ${formaPagamento}`);
-  if (observacoes) doc.text(`📝 Observações: ${observacoes}`);
+  // Corpo da proposta
+  doc.fontSize(12);
+  doc.text("Imóvel:", { continued: true }).font("Helvetica-Bold").text(` ${imovel}`);
+  doc.font("Helvetica").text("Vendedor:", { continued: true }).font("Helvetica-Bold").text(` ${vendedor}`);
+  doc.font("Helvetica").text("Comprador:", { continued: true }).font("Helvetica-Bold").text(` ${comprador}`);
+  doc.font("Helvetica").text("Valor da Proposta:", { continued: true }).font("Helvetica-Bold").text(` R$ ${valor}`);
+  doc.font("Helvetica").text("Forma de Pagamento:", { continued: true }).font("Helvetica-Bold").text(` ${formaPagamento}`);
+
+  if (observacoes && observacoes.trim() !== "") {
+    doc.moveDown();
+    doc.font("Helvetica").text("Observações:");
+    doc.font("Helvetica-Oblique").text(observacoes);
+  }
+
   doc.moveDown(4);
 
-  doc.text("__________________________", 70);
-  doc.text("__________________________", 350);
-  doc.text("Assinatura do Vendedor", 85, doc.y + 5);
-  doc.text("Assinatura do Comprador", 365, doc.y + 5);
+  // Assinaturas
+  doc.text("_________________________", 72, doc.y);
+  doc.text("_________________________", 330, doc.y);
+  doc.text("Assinatura do Vendedor", 95, doc.y + 5);
+  doc.text("Assinatura do Comprador", 355, doc.y + 5);
 
   doc.end();
 }
