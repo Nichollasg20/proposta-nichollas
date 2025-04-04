@@ -1,44 +1,38 @@
 import PDFDocument from "pdfkit";
-import getStream from "get-stream";
+import { Buffer } from "buffer";
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).end("Método não permitido");
-  }
+  if (req.method !== "POST") return res.status(405).end();
 
-  const { comprador, vendedor, endereco, valor, formaPagamento, observacoes } = req.body;
+  const { imovel, vendedor, comprador, valor, formaPagamento, observacoes } = req.body;
 
-  try {
-    const doc = new PDFDocument({ margin: 50 });
+  const doc = new PDFDocument({ size: "A4", margin: 50 });
+  const buffers = [];
 
-    doc.fontSize(20).fillColor("#a97d36").text("Proposta de Compra - House55", { align: "center" });
-    doc.moveDown();
-
-    doc.fontSize(12).fillColor("#000");
-    doc.text(`📍 Imóvel: ${endereco}`);
-    doc.text(`🤝 Vendedor: ${vendedor}`);
-    doc.text(`🧑‍💼 Comprador: ${comprador}`);
-    doc.text(`💰 Valor da Proposta: R$ ${Number(valor).toLocaleString("pt-BR")}`);
-    doc.text(`💳 Forma de Pagamento: ${formaPagamento}`);
-    if (observacoes && observacoes.trim() !== "") {
-      doc.text(`📝 Observações: ${observacoes}`);
-    }
-
-    doc.moveDown(2);
-    doc.text("_____________________________", 70);
-    doc.text("Assinatura do Vendedor", 70);
-    doc.text("_____________________________", 350);
-    doc.text("Assinatura do Comprador", 350);
-
-    doc.end();
-
-    const buffer = await getStream.buffer(doc);
-
+  doc.on("data", buffers.push.bind(buffers));
+  doc.on("end", () => {
+    const pdfData = Buffer.concat(buffers);
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", "attachment; filename=proposta_house55.pdf");
-    res.send(buffer);
-  } catch (error) {
-    console.error("Erro ao gerar PDF:", error);
-    res.status(500).send("Erro ao gerar o PDF");
-  }
+    res.setHeader("Content-Disposition", "inline; filename=proposta_house55.pdf");
+    res.send(pdfData);
+  });
+
+  doc.fontSize(20).fillColor("#a97d36").text("Proposta de Compra - House55", { align: "center" });
+  doc.moveDown(2);
+
+  doc.fontSize(12).fillColor("#000000");
+  doc.text(`📍 Imóvel: ${imovel}`);
+  doc.text(`🤝 Vendedor: ${vendedor}`);
+  doc.text(`🧑‍💼 Comprador: ${comprador}`);
+  doc.text(`💰 Valor da Proposta: R$ ${valor}`);
+  doc.text(`💳 Forma de Pagamento: ${formaPagamento}`);
+  if (observacoes) doc.text(`📝 Observações: ${observacoes}`);
+  doc.moveDown(4);
+
+  doc.text("__________________________", 70);
+  doc.text("__________________________", 350);
+  doc.text("Assinatura do Vendedor", 85, doc.y + 5);
+  doc.text("Assinatura do Comprador", 365, doc.y + 5);
+
+  doc.end();
 }
