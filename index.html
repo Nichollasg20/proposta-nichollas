@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gerador de Propostas - House55</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f6f6f6;
+      padding: 30px;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+      color: #a97d36;
+      margin-bottom: 25px;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    button {
+      margin-top: 25px;
+      width: 100%;
+      background-color: #a97d36;
+      color: white;
+      font-size: 16px;
+      padding: 14px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover {
+      background-color: #8c682e;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>📄 Gerador de Propostas - House55</h2>
+    <form id="propostaForm">
+      <label for="comprador">Nome do Comprador:</label>
+      <input type="text" id="comprador" required />
+
+      <label for="vendedor">Nome do Vendedor:</label>
+      <input type="text" id="vendedor" required />
+
+      <label for="endereco">Endereço do Imóvel:</label>
+      <input type="text" id="endereco" required />
+
+      <label for="valor">Valor da Proposta (R$):</label>
+      <input type="number" id="valor" required />
+
+      <label for="pagamento">Forma de Pagamento:</label>
+      <input type="text" id="pagamento" required />
+
+      <label for="obs">Observações (opcional):</label>
+      <textarea id="obs" rows="4"></textarea>
+
+      <button type="submit">📥 Gerar Proposta em PDF</button>
+    </form>
+  </div>
+
+  <script>
+    const form = document.getElementById("propostaForm");
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const dados = {
+        comprador: document.getElementById("comprador").value,
+        vendedor: document.getElementById("vendedor").value,
+        endereco: document.getElementById("endereco").value,
+        valor: document.getElementById("valor").value,
+        formaPagamento: document.getElementById("pagamento").value,
+        observacoes: document.getElementById("obs").value,
+      };
+
+      const response = await fetch("/api/gerarProposta", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(dados)
+      });
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "proposta_house55.pdf";
+      link.click();
+      URL.revokeObjectURL(url);
+    });
+  </script>
+</body>
+</html>
